@@ -12,8 +12,8 @@
 settings:
   # 是否允许给自己发送留言
   allow-self: false
-  # 是否允许给"从未进入过服务器"的玩家名发送留言 (为 true 时, 留言会在同名玩家第一次上线时发送)
-  allow-unknown-recipients: true
+  # 是否允许给"从未进入过服务器"的玩家名发送留言 (为 true 时, 留言会在同名玩家第一次上线时发送，建议设为false)
+  allow-unknown-recipients: false
   # 单条留言的最大长度 (字符数)
   max-length: 200
   # 两条留言之间的冷却时间 (秒), 0 表示不限制
