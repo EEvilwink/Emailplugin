@@ -1,0 +1,275 @@
+# ============================================================
+#  Ezmail - 邮箱插件 配置文件
+#  本插件为EVS服务器自用插件 测试版本 Paper 26.2
+#
+#  说明:
+#   * 文本支持 & 颜色代码 (例如 &c红色) 与 MiniMessage (例如 <red>)。
+#     同一段文本请只使用其中一种写法, 含有 '<' 的文本会按 MiniMessage 解析。
+#   * 文本中的 {xxx} 是占位符, 如果不知道什么意思就不要修改!!!。
+#   * 修改后执行 /ezmail reload 即可。
+# ============================================================
+
+settings:
+  # 是否允许给自己发送留言
+  allow-self: false
+  # 是否允许给"从未进入过服务器"的玩家名发送留言 (为 true 时, 留言会在同名玩家第一次上线时发送)
+  allow-unknown-recipients: true
+  # 单条留言的最大长度 (字符数)
+  max-length: 200
+  # 两条留言之间的冷却时间 (秒), 0 表示不限制
+  cooldown: 5
+  # 留言被读取后, 多少秒后自动删除, 0 表示永不自动删除 (604800 = 7 天，建议少于 14 天)
+  auto-delete-after-read: 604800
+  # 留言时间的显示格式 (Java 日期格式，不知道的话可以不修改，就是常见格式)
+  time-format: "yyyy-MM-dd HH:mm:ss"
+  # 聊天栏可点击文本使用 Paper 点击回调 (true) 还是执行命令 (false)
+  # 若服务器装有聊天转发/代理类插件, 点击无反应时可以尝试改为 false
+  use-click-callbacks: true
+
+# ------------------------------------------------------------
+#  发送数量限制
+#    total         : 玩家最多可发送的留言数，删除的留言不计数
+#    per-recipient : 对同一个收件人最多可发送多少留言
+#  玩家拥有某组的 permission 权限时该组生效;
+#  同时拥有多个组时, 每个数值取最大值。
+# ------------------------------------------------------------
+limits:
+  default:
+    total: 20
+    per-recipient: 5
+  groups:
+    vip:
+      permission: "ezmail.limit.vip"
+      total: 100
+      per-recipient: 20
+    staff:
+      permission: "ezmail.limit.staff"
+      total: 200
+      per-recipient: 50
+
+# 未读留言提醒
+reminder:
+  # 玩家上线时提醒
+  on-join: true
+  # 在线期间每隔多少秒提醒一次, 0 表示关闭定时提醒
+  interval: 120
+  # 提醒音效, 留空 ("") 表示不播放
+  sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
+  volume: 1.0
+  pitch: 1.0
+
+# 各种操作的音效, sound 留空则不播放
+sounds:
+  send:
+    sound: "ENTITY_ITEM_PICKUP"
+    volume: 1.0
+    pitch: 1.4
+  read:
+    sound: "UI_BUTTON_CLICK"
+    volume: 0.8
+    pitch: 1.0
+  delete:
+    sound: "ENTITY_ITEM_BREAK"
+    volume: 0.8
+    pitch: 1.0
+  open:
+    sound: "BLOCK_CHEST_OPEN"
+    volume: 0.7
+    pitch: 1.3
+  error:
+    sound: "ENTITY_VILLAGER_NO"
+    volume: 1.0
+    pitch: 1.0
+
+# ------------------------------------------------------------
+#  界面配置
+#   rows: 界面行数 (2-6), 最后一行用于翻页/信息/关闭按钮
+#   每一页可显示的留言数 = (rows - 1) * 9
+# ------------------------------------------------------------
+gui:
+  # 通用按钮
+  buttons:
+    filler:
+      material: GRAY_STAINED_GLASS_PANE
+      name: " "
+      lore: []
+    previous:
+      material: ARROW
+      name: "&e上一页"
+      lore:
+        - "&7当前第 &f{page}&7/&f{pages} &7页"
+    next:
+      material: ARROW
+      name: "&e下一页"
+      lore:
+        - "&7当前第 &f{page}&7/&f{pages} &7页"
+    close:
+      material: BARRIER
+      name: "&c关闭"
+      lore:
+        - "&7点击关闭界面"
+
+  # 收件箱: 其他玩家发给自己的留言
+  # 标题中的 {page}/{pages} 只在打开/翻页时刷新, 当前页码建议用下方 info 物品显示
+  inbox:
+    title: "&8&l收件箱"
+    rows: 6
+    info:
+      material: PAPER
+      name: "&7收件箱"
+      lore:
+        - "&7第 &f{page}&7/&f{pages} &7页"
+        - "&7未读: &c{unread} &8| &7已读: &a{read} &8| &7合计: &f{total}"
+        - "&7已读留言将在 &e{auto-delete} &7后自动删除"
+        - "&7点击留言可将内容发送到聊天栏"
+    unread:
+      material: RED_DYE
+      name: "&c未读留言"
+      lore:
+        - "&7发送者: &f{sender}"
+        - "&7发送时间: &f{time}"
+        - "&7状态: &c未读"
+        - ""
+        - "&e左键 &7查看留言"
+    read:
+      material: GREEN_DYE
+      name: "&a已读留言"
+      lore:
+        - "&7发送者: &f{sender}"
+        - "&7发送时间: &f{time}"
+        - "&7状态: &a已读"
+        - "&7自动删除: &e{countdown}"
+        - ""
+        - "&e左键 &7再次查看"
+
+  # 已发送: 自己发出的留言以及对方是否已读
+  sent:
+    title: "&8&l已发送"
+    rows: 6
+    info:
+      material: PAPER
+      name: "&7已发送的留言"
+      lore:
+        - "&7第 &f{page}&7/&f{pages} &7页"
+        - "&7合计: &f{total} &8| &7对方未读: &c{unread} &8| &7对方已读: &a{read}"
+        - "&7左键查看内容, 右键删除留言"
+    unread:
+      material: ORANGE_DYE
+      name: "&e等待读取"
+      lore:
+        - "&7收件人: &f{recipient}"
+        - "&7发送时间: &f{time}"
+        - "&7状态: &e对方未读"
+        - ""
+        - "&e左键 &7查看内容"
+        - "&c右键 &7删除留言"
+    read:
+      material: LIME_DYE
+      name: "&a已被读取"
+      lore:
+        - "&7收件人: &f{recipient}"
+        - "&7发送时间: &f{time}"
+        - "&7状态: &a对方已读"
+        - "&7自动删除: &e{countdown}"
+        - ""
+        - "&e左键 &7查看内容"
+        - "&c右键 &7删除留言"
+
+  # 管理菜单: 所有未读留言 + 已读但未删除的留言
+  admin:
+    title: "&8&l管理菜单"
+    rows: 6
+    info:
+      material: PAPER
+      name: "&7所有留言"
+      lore:
+        - "&7第 &f{page}&7/&f{pages} &7页"
+        - "&7合计: &f{total} &8| &7未读: &c{unread} &8| &7已读: &a{read}"
+        - "&7左键查看内容, 右键删除留言"
+    unread:
+      material: RED_DYE
+      name: "&c未读留言"
+      lore:
+        - "&7发送者: &f{sender}"
+        - "&7收件人: &f{recipient}"
+        - "&7发送时间: &f{time}"
+        - "&7状态: &c未读"
+        - ""
+        - "&e左键 &7查看内容"
+        - "&c右键 &7删除留言"
+    read:
+      material: GREEN_DYE
+      name: "&a已读留言"
+      lore:
+        - "&7发送者: &f{sender}"
+        - "&7收件人: &f{recipient}"
+        - "&7发送时间: &f{time}"
+        - "&7状态: &a已读"
+        - "&7待删除: &e{countdown}"
+        - ""
+        - "&e左键 &7查看内容"
+        - "&c右键 &7删除留言"
+
+# ------------------------------------------------------------
+#  消息文本
+# ------------------------------------------------------------
+messages:
+  prefix: "&b&lEzmail "
+
+  # 通用
+  no-permission: "&c你没有权限执行这个操作。"
+  player-only: "&c该指令只能由玩家执行。"
+  unknown-command: "&c未知的指令, 请使用 &f/{command} help&c 查看帮助。"
+  reload-success: "&a配置已重载。"
+  reload-failed: "&c重载失败, 请查看控制台报错。"
+
+  # 发送
+  player-not-found: "&c找不到玩家 &f{player}&c。"
+  cannot-send-self: "&c你不能给自己发送留言。"
+  empty-content: "&c留言内容不能为空。"
+  usage-send: "&c用法: &f/{command} send [玩家] [内容]"
+  too-long: "&c留言内容过长, 最多 &f{max} &c个字符。"
+  cooldown: "&c发送太快了, 请等待 &f{seconds} &c秒后再试。"
+  limit-total: "&c你已发送 &f{current} &c条留言, 达到上限 &f{limit} &c条, 请先删除部分留言。"
+  limit-recipient: "&c你给 &f{player} &c的留言已达上限 &f{limit} &c条。"
+  send-success: "&a留言已发送给 &f{player}&a。"
+
+  # 留言内容输出格式 (点击界面中的留言时输出到聊天栏)
+  # 可用占位符: {player_sender} {email} {time}
+  mail-format: "&8[&e来自 &f{player_sender} &e的留言&8] &f{email}"
+  # 发送方查看自己发送的留言时的格式: {player_recipient} {email} {time}
+  sent-format: "&8[&e发送给 &f{player_recipient} &e的留言&8] &f{email}"
+  # 管理员查看任意留言时的格式: {sender} {recipient} {email} {time}
+  admin-format: "&8[&7{sender} &8-> &7{recipient}&8] &f{email}"
+
+  # 未读提醒 (点击可打开收件箱)
+  notify-unread: "&e你有 &c{count} &e条未读留言, &b&l点击这里 &e打开收件箱。"
+  notify-hover: "&7点击打开收件箱"
+
+  # 界面
+  inbox-empty: "&7你的收件箱是空的。"
+  sent-empty: "&7你还没有发送过留言。"
+  admin-empty: "&7当前没有任何留言。"
+  delete-success: "&a已删除该留言, 收件人将不会再收到它。"
+  admin-delete-success: "&a已删除 &f{sender} &a发送给 &f{recipient} &a的留言。"
+
+  # 状态与倒计时
+  status-unread: "&c未读"
+  status-read: "&a已读"
+  countdown-never: "永不"
+  countdown-expired: "即将删除"
+  countdown-day: "{n}天"
+  countdown-hour: "{n}小时"
+  countdown-minute: "{n}分钟"
+  countdown-second: "{n}秒"
+  countdown-separator: " "
+
+  # 帮助信息
+  help:
+    - "&8&m--------&8[ &b&lEzmail &8]&m--------"
+    - "&f/{command} send [玩家] [内容] &8- &7给其他玩家留言"
+    - "&f/{command} inbox &8- &7打开收件箱"
+    - "&f/{command} sent &8- &7查看已发送的留言"
+    - "&f/{command} admin &8- &7管理菜单 (管理员)"
+    - "&f/{command} reload &8- &7重载配置 (管理员)"
+    - "&8&m--------------------------------"

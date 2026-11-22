@@ -1,9 +1,43 @@
 name: Ezmail
-description: $description
+description: Ezmail 玩家留言邮箱插件
 version: '${version}'
-
 main: me.evil.ezmail.Ezmail
 api-version: '26.2'
 load: POSTWORLD
 
 authors: [ Evilwink ]
+
+commands:
+  ezmail:
+    description: Ezmail 邮箱主命令
+    usage: /ezmail help
+    aliases: [ em ]
+
+permissions:
+  ezmail.send:
+    description: 允许发送留言
+    default: true
+  ezmail.inbox:
+    description: 允许打开收件箱
+    default: true
+  ezmail.sent:
+    description: 允许查看已发送的留言
+    default: true
+  ezmail.admin:
+    description: 允许打开管理员菜单
+    default: op
+  ezmail.reload:
+    description: 允许重载配置
+    default: op
+  ezmail.bypass.cooldown:
+    description: 无视发送冷却
+    default: op
+  ezmail.bypass.limit:
+    description: 无视发送数量限制
+    default: op
+  ezmail.limit.vip:
+    description: 使用 vip 权限组的发送数量限制
+    default: false
+  ezmail.limit.staff:
+    description: 使用 staff 权限组的发送数量限制
+    default: false
