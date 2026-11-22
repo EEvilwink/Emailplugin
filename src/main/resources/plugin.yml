@@ -1,0 +1,9 @@
+name: Ezmail
+description: $description
+version: '${version}'
+
+main: me.evil.ezmail.Ezmail
+api-version: '26.2'
+load: POSTWORLD
+
+authors: [ Evilwink ]
