@@ -7,6 +7,7 @@ import me.evil.ezmail.config.SoundSpec;
 import me.evil.ezmail.gui.GuiManager;
 import me.evil.ezmail.listener.GuiListener;
 import me.evil.ezmail.listener.PlayerListener;
+import me.evil.ezmail.mail.BroadcastStore;
 import me.evil.ezmail.mail.MailService;
 import me.evil.ezmail.mail.MailStore;
 import org.bukkit.Bukkit;
@@ -34,6 +35,7 @@ public final class Ezmail extends JavaPlugin {
     private Settings settings;
     private Lang lang;
     private MailStore store;
+    private BroadcastStore broadcastStore;
     private MailService mailService;
     private GuiManager guiManager;
 
@@ -46,6 +48,9 @@ public final class Ezmail extends JavaPlugin {
 
         this.store = new MailStore(this);
         this.store.load();
+
+        this.broadcastStore = new BroadcastStore(this);
+        this.broadcastStore.load();
 
         this.mailService = new MailService(this);
         this.guiManager = new GuiManager(this);
@@ -63,7 +68,8 @@ public final class Ezmail extends JavaPlugin {
         }
 
         scheduleTasks();
-        getLogger().info("Ezmail enabled with " + store.size() + " stored mail(s).");
+        getLogger().info("Ezmail enabled with " + store.size() + " stored mail(s) and "
+                + broadcastStore.size() + " broadcast(s).");
     }
 
     @Override
@@ -71,6 +77,9 @@ public final class Ezmail extends JavaPlugin {
         cancelTasks();
         if (store != null) {
             store.save();
+        }
+        if (broadcastStore != null) {
+            broadcastStore.save();
         }
     }
 
@@ -96,6 +105,10 @@ public final class Ezmail extends JavaPlugin {
 
     public MailStore store() {
         return store;
+    }
+
+    public BroadcastStore broadcastStore() {
+        return broadcastStore;
     }
 
     public MailService mailService() {
@@ -141,13 +154,17 @@ public final class Ezmail extends JavaPlugin {
             }, period, period));
         }
 
-        tasks.put("purge", getServer().getScheduler().runTaskTimer(this,
-                () -> store.purgeExpired(settings.autoDeleteMillis()),
-                20L * 60L, 20L * 60L));
+        tasks.put("purge", getServer().getScheduler().runTaskTimer(this, () -> {
+            store.purgeExpired(settings.autoDeleteMillis());
+            broadcastStore.purgeExpired();
+        }, 20L * 60L, 20L * 60L));
 
         tasks.put("save", getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             if (store.isDirty()) {
                 store.save();
+            }
+            if (broadcastStore.isDirty()) {
+                broadcastStore.save();
             }
         }, 20L * 30L, 20L * 30L));
 

@@ -26,6 +26,9 @@ permissions:
   ezmail.admin:
     description: 允许打开管理员菜单
     default: op
+  ezmail.broadcast:
+    description: 允许发布全服公告
+    default: op
   ezmail.reload:
     description: 允许重载配置
     default: op

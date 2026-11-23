@@ -7,8 +7,11 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 时间与倒计时的格式化工具。
@@ -20,6 +23,8 @@ public final class TimeUtil {
             .withZone(ZoneId.systemDefault());
 
     private static final Map<String, DateTimeFormatter> CACHE = new ConcurrentHashMap<>();
+
+    private static final Pattern DURATION = Pattern.compile("^(\\d+)\\s*([smhdw]?)$");
 
     private TimeUtil() {
     }
@@ -67,5 +72,48 @@ public final class TimeUtil {
         if (value > 0L && parts.size() < 2) {
             parts.add(lang.rawString(key).replace("{n}", Long.toString(value)));
         }
+    }
+
+    /**
+     * 解析 "30s" / "10m" / "12h" / "7d" / "2w" 这类时长, 纯数字按秒处理, 0 表示永不删除。
+     *
+     * @return 毫秒数, 无法解析时返回 null
+     */
+    public static Long parseDuration(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String text = raw.trim().toLowerCase(Locale.ROOT);
+        if (text.isEmpty()) {
+            return null;
+        }
+
+        Matcher matcher = DURATION.matcher(text);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        long value;
+        try {
+            value = Long.parseLong(matcher.group(1));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+
+        long multiplier = switch (matcher.group(2)) {
+            case "", "s" -> 1000L;
+            case "m" -> 60_000L;
+            case "h" -> 3_600_000L;
+            case "d" -> 86_400_000L;
+            case "w" -> 604_800_000L;
+            default -> -1L;
+        };
+        if (multiplier < 0L) {
+            return null;
+        }
+        if (value > Long.MAX_VALUE / multiplier) {
+            return null;
+        }
+        return value * multiplier;
     }
 }

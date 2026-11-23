@@ -10,18 +10,25 @@ import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * 留言的业务逻辑: 发送校验、读取、删除、未读提醒。
+ * 留言的业务逻辑: 发送校验、读取、删除、未读提醒、全服公告。
  */
 public final class MailService {
+
+    /** 控制台发布公告时使用的固定 UUID。 */
+    private static final UUID CONSOLE_ID = UUID.nameUUIDFromBytes("EzmailConsole".getBytes(StandardCharsets.UTF_8));
 
     private final Ezmail plugin;
     private final Map<UUID, Long> cooldownUntil = new HashMap<>();
@@ -192,10 +199,118 @@ public final class MailService {
     }
 
     /**
+     * 向所有玩家发布一条公告。公告会优先显示在收件箱最前面, 阅读后按各自的时间删除。
+     *
+     * @param actor           发布者, 可以是玩家或控制台
+     * @param deleteAfterRead 阅读后多少毫秒删除, 0 表示永不删除
+     * @param icon            自定义物品材质, null 表示使用配置默认值
+     * @param displayName     自定义物品名称, null 表示使用配置默认值
+     * @param lore            自定义物品描述, null 表示使用配置默认值
+     */
+    public boolean sendBroadcast(CommandSender actor, String content, long deleteAfterRead,
+                                 Material icon, String displayName, List<String> lore) {
+        Lang lang = plugin.lang();
+        Settings settings = plugin.settings();
+
+        if (!actor.hasPermission("ezmail.broadcast")) {
+            lang.send(actor, "no-permission");
+            playError(actor);
+            return false;
+        }
+
+        String trimmed = content == null ? "" : content.trim();
+        if (trimmed.isEmpty()) {
+            lang.send(actor, "empty-content");
+            playError(actor);
+            return false;
+        }
+        if (trimmed.length() > settings.broadcastMaxLength()) {
+            lang.send(actor, "too-long", Map.of("max", Integer.toString(settings.broadcastMaxLength())));
+            playError(actor);
+            return false;
+        }
+
+        UUID senderId;
+        String senderName;
+        if (actor instanceof Player player) {
+            senderId = player.getUniqueId();
+            senderName = player.getName();
+        } else {
+            senderId = CONSOLE_ID;
+            senderName = settings.broadcastConsoleName();
+        }
+
+        Broadcast broadcast = new Broadcast(
+                UUID.randomUUID(),
+                senderId,
+                senderName,
+                trimmed,
+                System.currentTimeMillis(),
+                deleteAfterRead,
+                icon,
+                displayName,
+                lore == null ? null : List.copyOf(lore));
+        plugin.broadcastStore().add(broadcast);
+
+        lang.send(actor, "broadcast-sent");
+        if (actor instanceof Player player) {
+            plugin.sound("send").play(player);
+        }
+
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            notifyUnread(online);
+        }
+        return true;
+    }
+
+    private void playError(CommandSender sender) {
+        if (sender instanceof Player player) {
+            plugin.sound("error").play(player);
+        }
+    }
+
+    /**
+     * 阅读公告: 记录该玩家的已读时间并输出内容。
+     */
+    public void readBroadcast(Player reader, Broadcast broadcast) {
+        boolean wasUnread = !broadcast.isReadBy(reader.getUniqueId());
+        plugin.broadcastStore().markRead(broadcast, reader.getUniqueId());
+        reader.sendMessage(broadcastMessage(broadcast));
+
+        if (wasUnread) {
+            plugin.sound("read").play(reader);
+        }
+    }
+
+    /**
+     * 查看公告内容但不会标记为已读 (管理员菜单使用)。
+     */
+    public void previewBroadcast(Player viewer, Broadcast broadcast) {
+        viewer.sendMessage(broadcastMessage(broadcast));
+    }
+
+    /**
+     * 删除一条公告, 所有玩家都将不再看到它。
+     */
+    public void deleteBroadcast(Player admin, Broadcast broadcast) {
+        plugin.broadcastStore().remove(broadcast.id());
+        plugin.lang().send(admin, "broadcast-deleted", Map.of("sender", broadcast.senderName()));
+        plugin.sound("delete").play(admin);
+    }
+
+    private Component broadcastMessage(Broadcast broadcast) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("sender", broadcast.senderName());
+        placeholders.put("email", broadcast.message());
+        placeholders.put("time", TimeUtil.format(broadcast.sentAt(), plugin.settings().timeFormat()));
+        return plugin.lang().raw("broadcast-format", placeholders);
+    }
+
+    /**
      * 向玩家发送未读提醒 (可点击打开收件箱)。
      */
     public void notifyUnread(Player player) {
-        int unread = plugin.store().unreadCount(player.getUniqueId(), player.getName());
+        int unread = unreadTotal(player);
         if (unread <= 0) {
             return;
         }
@@ -206,6 +321,14 @@ public final class MailService {
                 .hoverEvent(HoverEvent.showText(plugin.lang().raw("notify-hover")));
         player.sendMessage(message);
         plugin.settings().reminder().sound().play(player);
+    }
+
+    /**
+     * 玩家的未读总数 (普通留言 + 公告)。
+     */
+    public int unreadTotal(Player player) {
+        return plugin.store().unreadCount(player.getUniqueId(), player.getName())
+                + plugin.broadcastStore().unreadCount(player.getUniqueId());
     }
 
     /**

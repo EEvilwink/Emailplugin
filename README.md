@@ -17,6 +17,9 @@ Minecraft / **Paper 26.2** 服务器插件：给玩家一个"邮箱"，让玩家
 - 玩家上线时如果存在未读留言会收到提示，之后每隔一段时间再次提醒（可配置），提示可附带音效。
 - `/em admin` 打开管理员菜单：查看服务器上所有未读留言和已读但未删除的留言，
   显示发送者、接收者、发送时间，已读留言额外显示待删除时间，同样支持翻页。
+- `/em broadcast` 发布全服公告（管理员）：公告所有人可见，并固定显示在收件箱最前面，
+  可以单独设置阅读后的删除时间以及界面里显示的物品材质 / 名称 / 描述；
+  玩家点击阅读后开始倒计时，到时间只从该玩家的收件箱移除，管理员也可以在管理菜单里直接删除。
 - 已读留言会在配置的时间后自动删除；发送数量、单人数量、冷却时间都可以在配置里限制，
   并支持按权限组配置来设置不同的数量限制。
 
@@ -27,11 +30,25 @@ Minecraft / **Paper 26.2** 服务器插件：给玩家一个"邮箱"，让玩家
 | `/ezmail send <玩家> <内容>` | 给玩家留言 | `ezmail.send` |
 | `/ezmail inbox` | 打开收件箱 | `ezmail.inbox` |
 | `/ezmail sent` | 打开发送界面 | `ezmail.sent` |
+| `/ezmail broadcast [选项] <内容>` | 发布全服公告 | `ezmail.broadcast` |
 | `/ezmail admin` | 打开管理员菜单 | `ezmail.admin` |
 | `/ezmail reload` | 重载配置 | `ezmail.reload` |
 | `/ezmail help` | 显示帮助 | - |
 
 插件指令为 `/ezmail`，也可以用缩写 `/em`。
+
+公告指令支持以下选项（都可以不写，使用配置里的默认值）：
+
+```
+/ezmail broadcast [-t 时长] [-i 材质] [-n 名称] [-l 描述] <内容>
+```
+
+- `-t`：阅读后的删除时间，例如 `30m`、`12h`、`7d`，`0` 表示永不删除。
+- `-i`：界面中显示的物品材质，例如 `WRITTEN_BOOK`。
+- `-n`：物品名称，带空格时用英文双引号包起来，例如 `-n "&6维护公告"`。
+- `-l`：物品描述，多行用 `|` 分隔，例如 `-l "第一行|第二行"`。
+
+控制台也可以执行该指令（显示的发件人名称见配置 `broadcast.console-name`）。
 
 ## 权限
 
@@ -41,6 +58,7 @@ Minecraft / **Paper 26.2** 服务器插件：给玩家一个"邮箱"，让玩家
 | `ezmail.inbox` | 所有人 | 允许打开收件箱 |
 | `ezmail.sent` | 所有人 | 允许查看已发送的留言 |
 | `ezmail.admin` | OP | 允许打开管理员菜单 |
+| `ezmail.broadcast` | OP | 允许发布全服公告 |
 | `ezmail.reload` | OP | 允许重载配置 |
 | `ezmail.bypass.cooldown` | OP | 无视发送冷却 |
 | `ezmail.bypass.limit` | OP | 无视发送数量限制 |
@@ -57,12 +75,15 @@ Minecraft / **Paper 26.2** 服务器插件：给玩家一个"邮箱"，让玩家
 - `sounds`：发送、读取、删除、打开界面、出错时的音效。
 - `gui`：三种界面的标题、行数、信息物品、未读物品、已读物品的材质 / 名称 / 描述，以及翻页、关闭、填充物品。
   例如把未读留言改为红色染料、已读留言改为绿色染料（默认是这个，可以改成喜欢的）。
+- `broadcast`：全服公告的默认删除时间、内容长度上限、控制台发件人名称，以及公告在收件箱 / 管理菜单中的物品外观。
+  发送时可以用指令参数覆盖单条公告的外观。
 - `messages`：所有提示文本、留言输出格式、状态文字、倒计时单位、帮助信息。
 
 文本支持 `&` 颜色代码（如 `&c红色`）和 MiniMessage（如 `<red>`）；同一段文本请只用其中一种写法。
 文本中的 `{xxx}` 是占位符，例如 `{player_sender}`、`{email}`、`{count}`、`{countdown}`、`{page}`、`{pages}` 等，不要修改大括号内的东西。
 
-留言数据保存在 `plugins/Ezmail/mails.yml`，每 30 秒自动保存一次，关服时也会保存。
+留言数据保存在 `plugins/Ezmail/mails.yml`，公告数据保存在 `plugins/Ezmail/broadcasts.yml`，
+每 30 秒自动保存一次，关服时也会保存。
 
 ## 构建
 
@@ -70,6 +91,6 @@ Minecraft / **Paper 26.2** 服务器插件：给玩家一个"邮箱"，让玩家
 ./gradlew build        # Windows: gradlew.bat build
 ```
 
-生成的插件位于 `build/libs/Ezmail-1.0.0.jar`，放入服务器的 `plugins/` 目录即可。
+生成的插件位于 `build/libs/Ezmail-<版本>.jar`，放入服务器的 `plugins/` 目录即可。
 
 需要 Java 25 与 Paper 26.2（`paper-api:26.2.build.+`），其他版本未测试。

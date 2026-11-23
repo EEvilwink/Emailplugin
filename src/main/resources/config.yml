@@ -211,6 +211,57 @@ gui:
         - "&c右键 &7删除留言"
 
 # ------------------------------------------------------------
+#  全服公告
+#  管理员使用 /ezmail broadcast [-t 时长] [-i 材质] [-n 名称] [-l 描述] <内容>
+#  公告所有人可见, 并优先显示在收件箱最前面;
+#  玩家点击阅读后按下面的删除时间从该玩家的收件箱移除。
+# ------------------------------------------------------------
+broadcast:
+  # 默认的"阅读后删除"时间 (秒), 0 = 永不删除
+  # 发送时可用 -t 参数单独指定, 例如 -t 3d
+  default-delete-after-read: 604800
+  # 公告正文的最大长度
+  max-length: 1000
+  # 通过控制台发布公告时显示的发件人名称
+  console-name: "服务器"
+  # 公告在界面中的外观
+  # 发送时可用 -i 材质 / -n 名称 / -l 描述 单独覆盖某一篇公告的外观
+  gui:
+    unread:
+      material: NETHER_STAR
+      name: "&6&l[公告]"
+      lore:
+        - "&7发送者: &f{sender}"
+        - "&7发布时间: &f{time}"
+        - "&7状态: &c未读"
+        - ""
+        - "&e左键 &7查看公告"
+    read:
+      material: PAPER
+      name: "&6&l[公告]"
+      lore:
+        - "&7发送者: &f{sender}"
+        - "&7发布时间: &f{time}"
+        - "&7状态: &a已读"
+        - "&7自动删除: &e{countdown}"
+        - ""
+        - "&e左键 &7再次查看"
+    # 管理员菜单中的公告外观
+    # 可用: {readers} 已读人数, {delete-after} 阅读后的删除时间
+    admin:
+      material: NETHER_STAR
+      name: "&6&l[公告]"
+      lore:
+        - "&7发送者: &f{sender}"
+        - "&7接收者: &f{recipient}"
+        - "&7发布时间: &f{time}"
+        - "&7已读人数: &f{readers}"
+        - "&7阅读后删除: &e{delete-after}"
+        - ""
+        - "&e左键 &7查看内容"
+        - "&c右键 &7删除公告"
+
+# ------------------------------------------------------------
 #  消息文本
 # ------------------------------------------------------------
 messages:
@@ -253,6 +304,16 @@ messages:
   delete-success: "&a已删除该留言, 收件人将不会再收到它。"
   admin-delete-success: "&a已删除 &f{sender} &a发送给 &f{recipient} &a的留言。"
 
+  # 公告
+  broadcast-sent: "&a公告已发送, 所有玩家都能在收件箱看到。"
+  # 阅读公告时输出到聊天栏的格式: {sender} {email} {time}
+  broadcast-format: "&8[&6&l公告&8] &f{email}"
+  broadcast-usage: "&c用法: &f/{command} broadcast [-t 时长] [-i 材质] [-n 名称] [-l 描述] [内容]"
+  broadcast-invalid-time: "&c无法识别的时间 &f{time}&c, 例如 30m、12h、7d、0(永不删除)。"
+  broadcast-invalid-item: "&c无法识别的物品 &f{item}&c。"
+  broadcast-deleted: "&a已删除 &f{sender} &a发布的公告。"
+  broadcast-recipient: "所有人"
+
   # 状态与倒计时
   status-unread: "&c未读"
   status-read: "&a已读"
@@ -270,6 +331,7 @@ messages:
     - "&f/{command} send [玩家] [内容] &8- &7给其他玩家留言"
     - "&f/{command} inbox &8- &7打开收件箱"
     - "&f/{command} sent &8- &7查看已发送的留言"
+    - "&f/{command} broadcast [内容] &8- &7发布全服公告 (管理员)"
     - "&f/{command} admin &8- &7管理菜单 (管理员)"
     - "&f/{command} reload &8- &7重载配置 (管理员)"
     - "&8&m--------------------------------"
