@@ -81,6 +81,7 @@ Minecraft / **Paper 26.2** 服务器插件：给玩家一个"邮箱"，让玩家
 
 文本支持 `&` 颜色代码（如 `&c红色`）和 MiniMessage（如 `<red>`）；同一段文本请只用其中一种写法。
 文本中的 `{xxx}` 是占位符，例如 `{player_sender}`、`{email}`、`{count}`、`{countdown}`、`{page}`、`{pages}` 等，不要修改大括号内的东西。
+界面中物品的名称与描述默认不再显示为斜体（原版自定义物品名默认是斜体），想显示斜体时在文本里写 `&o` 或 `<italic>` 即可。
 
 留言数据保存在 `plugins/Ezmail/mails.yml`，公告数据保存在 `plugins/Ezmail/broadcasts.yml`，
 每 30 秒自动保存一次，关服时也会保存。

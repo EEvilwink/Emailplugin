@@ -2,6 +2,7 @@ package me.evil.ezmail.util;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -77,5 +78,18 @@ public final class Text {
             placeholders.put(pairs[i], pairs[i + 1]);
         }
         return format(raw, placeholders);
+    }
+
+    /**
+     * 取消默认斜体。
+     * <p>
+     * Minecraft 客户端会把"自定义名称"的物品名称 / 描述渲染成斜体 (原版改名物品也是这样)。
+     * 这里套一层 italic=false 的父组件, 子组件没有显式设置斜体时就会继承"不斜体";
+     * 如果配置里显式写了 {@code &o} 或 {@code <italic>}, 对应片段仍然会正常显示为斜体。
+     */
+    public static Component withoutItalic(Component component) {
+        return Component.empty()
+                .decoration(TextDecoration.ITALIC, false)
+                .append(component);
     }
 }

@@ -59,13 +59,14 @@ public record ItemTemplate(Material material, String name, List<String> lore, in
         }
 
         if (name != null && !name.isEmpty()) {
-            meta.displayName(Text.format(name, placeholders));
+            // 物品名称默认会被客户端渲染成斜体, 这里显式关闭 (配置里写 &o 仍然可以局部斜体)
+            meta.displayName(Text.withoutItalic(Text.format(name, placeholders)));
         }
 
         if (lore != null && !lore.isEmpty()) {
             List<Component> lines = new ArrayList<>(lore.size());
             for (String line : lore) {
-                lines.add(Text.format(line, placeholders));
+                lines.add(Text.withoutItalic(Text.format(line, placeholders)));
             }
             meta.lore(lines);
         }

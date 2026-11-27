@@ -21,15 +21,15 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 一个打开的邮箱界面 (收件箱 / 已发送 / 管理菜单)。
- * 界面只显示发送者、时间、状态等信息, 不显示留言正文, 点击后才会输出到聊天栏。
+ * 一个打开的邮箱界面 (收件箱 / 已发送 / 管理菜单)
+ * 界面只显示发送者、时间、状态等信息, 不显示留言正文, 点击后才会输出到聊天栏
  * <p>
- * 收件箱中公告会优先显示在最前面, 并且每个玩家单独记录公告的已读状态。
+ * 收件箱中公告会优先显示在最前面, 并且每个玩家单独记录公告的已读状态
  */
 public final class MailGui implements InventoryHolder {
 
     /**
-     * 界面中的一格内容: 要么是一条普通留言, 要么是一条公告。
+     * 界面中的一格内容: 要么是一条普通留言, 要么是一条公告
      */
     private record Entry(Mail mail, Broadcast broadcast) {
 
@@ -72,7 +72,7 @@ public final class MailGui implements InventoryHolder {
     }
 
     /**
-     * 把界面展示给玩家。
+     * 把界面展示给玩家
      */
     public void open() {
         viewer.openInventory(inventory);
@@ -80,7 +80,7 @@ public final class MailGui implements InventoryHolder {
     }
 
     /**
-     * 重新读取数据并刷新界面内容 (翻页、读取、删除、自动删除后调用)。
+     * 重新读取数据并刷新界面内容 (翻页、读取、删除、自动删除后调用)
      */
     public void refresh() {
         List<Entry> entries = loadEntries();
@@ -93,7 +93,7 @@ public final class MailGui implements InventoryHolder {
     }
 
     /**
-     * 处理界面中的一次点击。
+     * 处理界面中的一次点击
      */
     public void handleClick(int slot, boolean rightClick) {
         if (slot == layout.closeSlot()) {
@@ -225,7 +225,7 @@ public final class MailGui implements InventoryHolder {
     }
 
     /**
-     * 公告物品可以按条自定义材质 / 名称 / 描述, 没有自定义时使用配置中的模板。
+     * 公告物品可以按条自定义材质 / 名称 / 描述, 没有自定义时使用配置中的模板
      */
     private ItemStack buildBroadcastItem(ItemTemplate template, Broadcast broadcast) {
         Material material = broadcast.icon() != null ? broadcast.icon() : template.material();
@@ -325,7 +325,7 @@ public final class MailGui implements InventoryHolder {
     }
 
     /**
-     * 读取界面要显示的内容。收件箱与管理菜单中公告排在普通留言前面。
+     * 读取界面要显示的内容。收件箱与管理菜单中公告排在普通留言前面
      */
     private List<Entry> loadEntries() {
         UUID playerId = viewer.getUniqueId();
